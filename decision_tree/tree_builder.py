@@ -36,5 +36,5 @@ class Decision_Tree:
     def evaluate(self):
         pass
 
-    def predict(self):
-        pass
+    def predict(self, data_to_predict):
+        return self.decision_tree.predict(data_to_predict)
