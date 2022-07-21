@@ -5,27 +5,19 @@ from matplotlib import pyplot as plt
 from sklearn import tree
 
 local_config = config_dt.Config()
+local_config.build_data()
 
 class Decision_Tree:
-    def __init__(self, preprocessed_data):
+    def __init__(self, preprocessed_data, labels, feature_columns):
+        self.labels = labels
         self.data = preprocessed_data
-        if local_config.if_use_default_label:
-            self.labels = numpy.random.randint(10, size=30)
-        else:
-            self.labels = local_config.labels
+        self.feature_columns = feature_columns
         
     def train(self):
         self.decision_tree = DecisionTreeClassifier()
         self.decision_tree.fit(self.data, self.labels)
 
     def visualize(self):
-        self.feature_columns = []
-        if local_config.if_use_default_feature_columns:
-            for i in range(self.data.shape[1]):
-                self.feature_columns.append("PC"+str(i))
-        else:
-            self.feature_columns = local_config.feature_columns
-
         fig = plt.figure(figsize=(25,20))
         _ = tree.plot_tree(self.decision_tree, 
                    feature_names=self.feature_columns,  

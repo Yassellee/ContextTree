@@ -4,8 +4,7 @@ class Config:
         self.if_use_default_feature_columns = True
         self.labels = []
         self.if_use_default_label = True
-        self.n_components = 0.90
-        self.random_state = 2022
+        self.k = 20
     
     def build_data(self):
         pass
