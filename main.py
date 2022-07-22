@@ -1,6 +1,7 @@
 from data_preprocessing.processor import data_frame_builder
 from dimension_reduction.PCA_strategy import PCA_strategy
 from feature_selection.KBest_Strategy import KBest_Strategy
+from feature_selection.Boruta_Strategy import Boruta_Strategy
 from decision_tree.tree_builder import Decision_Tree
 import config
 
@@ -16,6 +17,8 @@ def main():
         data_slimming_strategy = KBest_Strategy(preprocessed_data)
     elif local_config.data_slimming_strategy == "PCA":
         data_slimming_strategy = PCA_strategy(preprocessed_data)
+    elif local_config.data_slimming_strategy == "Boruta":
+        data_slimming_strategy = Boruta_Strategy(preprocessed_data)
 
     data_slimming_strategy.standardization()
     data_slimming_strategy.slimming()
@@ -25,6 +28,9 @@ def main():
         feature_names = data_slimming_strategy.new_feature_names
     elif local_config.data_slimming_strategy == "PCA":
         feature_names = data_slimming_strategy.feature_columns
+    elif local_config.data_slimming_strategy == "Boruta":
+        data_slimming_strategy.show_feature_names()
+        feature_names = data_slimming_strategy.new_feature_names
 
     decision_tree = Decision_Tree(data_slimming_strategy.processed_data, data_slimming_strategy.labels, feature_names)
     decision_tree.train()
