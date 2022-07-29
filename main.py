@@ -7,34 +7,45 @@ import config
 
 local_config = config.Config()
 
+def build_data():
+    return data_frame_builder()
 
-def main():
-    preprocessed_data = data_frame_builder()
 
-    data_slimming_strategy = None
-
+def build_data_slimming_strategy(preprocessed_data):
     if local_config.data_slimming_strategy == "KBest":
-        data_slimming_strategy = KBest_Strategy(preprocessed_data)
+        return KBest_Strategy(preprocessed_data).standardization().slimming()
     elif local_config.data_slimming_strategy == "PCA":
-        data_slimming_strategy = PCA_strategy(preprocessed_data)
+        return PCA_strategy(preprocessed_data).standardization().slimming()
     elif local_config.data_slimming_strategy == "Boruta":
-        data_slimming_strategy = Boruta_Strategy(preprocessed_data)
+        return Boruta_Strategy(preprocessed_data).standardization().slimming()
 
-    data_slimming_strategy.standardization()
-    data_slimming_strategy.slimming()
 
+def build_feature_names(data_slimming_strategy):
     if local_config.data_slimming_strategy == "KBest":
         data_slimming_strategy.show_feature_names()
-        feature_names = data_slimming_strategy.new_feature_names
+        return data_slimming_strategy.new_feature_names
     elif local_config.data_slimming_strategy == "PCA":
-        feature_names = data_slimming_strategy.feature_columns
+        return data_slimming_strategy.feature_columns
     elif local_config.data_slimming_strategy == "Boruta":
         data_slimming_strategy.show_feature_names()
-        feature_names = data_slimming_strategy.new_feature_names
+        return data_slimming_strategy.new_feature_names
 
+
+def build_tree(data_slimming_strategy, feature_names):
     decision_tree = Decision_Tree(data_slimming_strategy.processed_data, data_slimming_strategy.labels, feature_names)
     decision_tree.train()
     decision_tree.visualize()
+    return decision_tree
+
+
+def main():
+    preprocessed_data = build_data()
+
+    data_slimming_strategy = build_data_slimming_strategy(preprocessed_data)
+
+    feature_names = build_feature_names(data_slimming_strategy)
+
+    decision_tree = build_tree(data_slimming_strategy, feature_names)
 
 if __name__ == '__main__':
     main()
