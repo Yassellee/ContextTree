@@ -18,7 +18,7 @@ def default_data_builder():
     return data_frame
 
 def custom_data_builder():
-    return pandas.DataFrame(data=local_config.dict_raw_data)
+    return local_config.dict_raw_data
 
 def data_frame_builder():
     if local_config.if_use_raw_data:
