@@ -1,12 +1,18 @@
 import codecs, re, ast, pickle, pandas, numpy
+from this import d
 from boruta import BorutaPy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, _tree
 from matplotlib import pyplot as plt
 from sklearn import tree
 
+
 file_path = "logitems0919.txt"
-package_to_explore = "com.tencent.mm"
+package_to_explore = "com.huawei.android.launcher"
+previous_latitude, previous_longitude, previous_altitude, previous_location_tag = 0, 0, 0, 0 
+previous_SSID_number, previous_LinkSpeed, previous_signal = 0, 0, 0
+previous_bluetooth_state = 0
+
 
 def digest_time(time):
     if time == ' ':
@@ -16,25 +22,42 @@ def digest_time(time):
     month = (int)(time_info[1])
     day = (int)(time_info[2])
     exact_time = (int)(time_info[3])*3600+300*((int)(time_info[4])/5)
-    return year, month, day, exact_time    
+    return year, month, day, exact_time
 
 
 def digest_location(location):
+    global previous_latitude, previous_longitude, previous_altitude, previous_location_tag
+    diff_latitude, diff_longitude, diff_altitude, diff_tag = 0, 0, 0, 0
     if location == ' ':
-        return 0, 0, 0, 0
+        return 0, 0, 0, 0, 0, 0, 0, 0
     location_info = re.split("==", location)
     latitude = round((float)(location_info[1]), 3)
+    if previous_latitude != latitude:
+        diff_latitude = 1
+        previous_latitude = latitude
     longitude = round((float)(location_info[2]), 3)
+    if previous_longitude != longitude:
+        diff_longitude = 1
+        previous_longitude = longitude
     altitude = round((float)(location_info[3]), 3)
+    if previous_altitude != altitude:
+        diff_altitude = 1
+        previous_altitude = altitude
     tag = ast.literal_eval(location_info[6])[0].get("tags").replace(';', '_')
     tag = location_name_dict.get(tag)
+    if previous_location_tag != tag:
+        diff_tag = 1
+        previous_location_tag = tag
 
-    return latitude, longitude, altitude, tag
+
+    return latitude, diff_latitude, longitude, diff_longitude, altitude, diff_altitude, tag, diff_tag
 
 
 def digest_network(network):
+    global previous_SSID_number, previous_LinkSpeed, previous_signal
+    diff_SSID_number, diff_LinkSpeed, diff_signal = 0, 0, 0
     if network == ' ':
-        return 0, 0, 0
+        return 0, 0, 0, 0, 0, 0
     network = ast.literal_eval(network)
     SSID_number = network["SSID"]
     LinkSpeed = network["LinkSpeed"]
@@ -44,48 +67,66 @@ def digest_network(network):
         SSID_table[SSID_number] = len(SSID_table)+1
     else:
         SSID_number = SSID_table[SSID_number]
+    
+    if previous_SSID_number != SSID_number:
+        diff_SSID_number = 1
+        previous_SSID_number = SSID_number
+    if previous_LinkSpeed != LinkSpeed:
+        diff_LinkSpeed = 1
+        previous_LinkSpeed = LinkSpeed
+    if previous_signal != signal:
+        diff_signal = 1
+        previous_signal = signal
 
-    return SSID_number, LinkSpeed, signal
+    return SSID_number, diff_SSID_number, LinkSpeed, diff_LinkSpeed, signal, diff_signal
 
 
 def digest_bluetooth(bluetooth):
+    global previous_bluetooth_state
+    diff_bluetooth_state = 0
     if bluetooth == ' ':
-        return 0
-    return ast.literal_eval(bluetooth).get("bluetooth_state:")
+        return 0, 0
+    bluetooth = ast.literal_eval(bluetooth)
+    bluetooth_state = bluetooth.get("bluetooth_state:")
+    if previous_bluetooth_state != bluetooth_state:
+        diff_bluetooth_state = 1
+        previous_bluetooth_state = bluetooth_state
+
+    return bluetooth_state, diff_bluetooth_state
 
 
 def digest_list_information(list_information):
     list_task = []
-    year = [] 
-    month = []
-    day = []
-    exact_time = []
-    latitude = [] 
-    longitude = [] 
-    altitude = []
-    location_tag = []
-    SSID_number = []
-    LinkSpeed = [] 
-    signal = [] 
-    bluetooth_state = []
+    year, month, day, exact_time = [], [], [], []
+    latitude, diff_latitude, longitude, diff_longitude, altitude, diff_altitude, location_tag, diff_tag = [], [], [], [], [], [], [], []
+    SSID_number, diff_SSID, LinkSpeed, diff_LinkSpeed, signal, diff_signal = [], [], [], [], [], []
+    bluetooth_state, diff_bluetooth_state = [], []
     for line_dict in list_information:
         list_task.append(line_dict["task"])
         cur_year, cur_month, cur_day, cur_exact_time = digest_time(time=line_dict["time"])
-        cur_latitude, cur_longitude, cur_altitude, cur_location_tag = digest_location(location=line_dict["location"])
-        cur_SSID_number, cur_LinkSpeed, cur_signal = digest_network(network=line_dict["network"])
-        cur_bluetooth_state = digest_bluetooth(bluetooth=line_dict["bluetooth"])
+        cur_latitude, cur_diff_latitude, cur_longitude, cur_diff_longitude, cur_altitude, cur_diff_altitude, cur_location_tag, cur_diff_tag = digest_location(location=line_dict["location"])
+        cur_SSID_number, cur_diff_SSID, cur_LinkSpeed, cur_diff_LinkSpeed, cur_signal, cur_diff_signal = digest_network(network=line_dict["network"])
+        cur_bluetooth_state, cur_diff_bluetooth = digest_bluetooth(bluetooth=line_dict["bluetooth"])
         year.append(cur_year)
         month.append(cur_month)
         day.append(cur_day)
         exact_time.append(cur_exact_time)
         latitude.append(cur_latitude)
+        diff_latitude.append(cur_diff_latitude)
         longitude.append(cur_longitude)
+        diff_longitude.append(cur_diff_longitude)
         altitude.append(cur_altitude)
+        diff_altitude.append(cur_diff_altitude)
         location_tag.append(cur_location_tag)
+        diff_tag.append(cur_diff_tag)
         SSID_number.append(cur_SSID_number)
+        diff_SSID.append(cur_diff_SSID)
         LinkSpeed.append(cur_LinkSpeed)
+        diff_LinkSpeed.append(cur_diff_LinkSpeed)
         signal.append(cur_signal)
+        diff_signal.append(cur_diff_signal)
         bluetooth_state.append(cur_bluetooth_state)
+        diff_bluetooth_state.append(cur_diff_bluetooth)
 
     ans_dict = {}
     ans_dict["year"] = year
@@ -93,13 +134,21 @@ def digest_list_information(list_information):
     ans_dict["day"] = day
     ans_dict["exact_time"] = exact_time
     ans_dict["latitude"] = latitude
+    ans_dict["diff_latitude"] = diff_latitude
     ans_dict["longitude"] = longitude
+    ans_dict["diff_longitude"] = diff_longitude
     ans_dict["altitude"] = altitude
+    ans_dict["diff_altitude"] = diff_altitude
     ans_dict["location_tag"] = location_tag
+    ans_dict["diff_tag"] = diff_tag
     ans_dict["SSID_number"] = SSID_number
+    ans_dict["diff_SSID"] = diff_SSID
     ans_dict["LinkSpeed"] = LinkSpeed
+    ans_dict["diff_LinkSpeed"] = diff_LinkSpeed
     ans_dict["signal"] = signal
+    ans_dict["diff_signal"] = diff_signal
     ans_dict["bluetooth_state"] = bluetooth_state
+    ans_dict["diff_bluetooth_state"] = diff_bluetooth_state
 
     return pandas.DataFrame(data=ans_dict), list_task
 
@@ -237,6 +286,8 @@ def build_rules(tree, feature_names):
 def main():
     pd_dataframe, list_task = build_data()
 
+    print(pd_dataframe)
+
     processed_data, new_feature_names, labels = build_feature(pd_dataframe, list_task)
 
     tree = build_tree(processed_data, new_feature_names, labels)
@@ -248,7 +299,6 @@ def main():
             rule_file.writelines(r)
             rule_file.writelines('\r\n')
             rule_file.writelines('\r\n')
-
 
 
 if __name__ == '__main__':
