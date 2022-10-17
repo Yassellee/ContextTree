@@ -1,5 +1,4 @@
 import codecs, re, ast, pickle, pandas, numpy
-from this import d
 from boruta import BorutaPy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, _tree
@@ -8,7 +7,7 @@ from sklearn import tree
 
 
 file_path = "logitems0919.txt"
-package_to_explore = "com.huawei.android.launcher"
+package_to_explore = "com.tencent.mm|"
 previous_latitude, previous_longitude, previous_altitude, previous_location_tag = 0, 0, 0, 0 
 previous_SSID_number, previous_LinkSpeed, previous_signal = 0, 0, 0
 previous_bluetooth_state = 0
