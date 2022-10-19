@@ -16,7 +16,7 @@ def insert_info(request):
         try:
             insert_info = request.FILES['update_file']
         except Exception as e:
-            return gen_response(400, "Illegal json format of request: {}".format(e))
+            return gen_response(400, "Unable to extract files: {}".format(e))
         def handle_uploaded_file(f):
             previous_folder_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
             with open(previous_folder_path+'\\Boruta_AllInOne\\logItems.txt', 'ab+') as destination:
