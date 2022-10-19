@@ -1,16 +1,29 @@
-import codecs, re, ast, pickle, pandas, numpy
+import re, ast, pickle, pandas, codecs, os
 from boruta import BorutaPy
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier, _tree
-from matplotlib import pyplot as plt
-from sklearn import tree
 
 
-file_path = "logitems0919.txt"
-package_to_explore = "com.tencent.mm|"
+file_path = "logitems.txt"
+package_to_explore = "com.tencent.mm"
 previous_latitude, previous_longitude, previous_altitude, previous_location_tag = 0, 0, 0, 0 
 previous_SSID_number, previous_LinkSpeed, previous_signal = 0, 0, 0
 previous_bluetooth_state = 0
+
+
+def build_info(types, lines):
+    list_information = []
+    for line in lines:
+        information = re.split('##|@@', line)
+        line_dict = {}
+        if types == information[1]:
+            line_dict["task"] = information[0]
+            line_dict["types"] = information[1]
+            line_dict["time"] = information[2]
+            line_dict["location"] = information[3]
+            line_dict["network"] = information[4]
+            line_dict["bluetooth"] = information[5]
+            list_information.append(line_dict)
+    return list_information
 
 
 def digest_time(time):
@@ -152,33 +165,18 @@ def digest_list_information(list_information):
     return pandas.DataFrame(data=ans_dict), list_task
 
 
-def build_info(types, lines):
-    list_information = []
-    for line in lines:
-        information = re.split('##|@@', line)
-        line_dict = {}
-        if types == information[1]:
-            line_dict["task"] = information[0]
-            line_dict["types"] = information[1]
-            line_dict["time"] = information[2]
-            line_dict["location"] = information[3]
-            line_dict["network"] = information[4]
-            line_dict["bluetooth"] = information[5]
-            list_information.append(line_dict)
-    return list_information
-
-
 def build_data():
+    current_path = os.path.abspath(os.path.dirname(__file__))+"\\"
     pd_dataframe = None
     list_task = None
-    with open("location_name_dict.pkl", 'rb') as f1:
+    with open(current_path+"location_name_dict.pkl", 'rb') as f1:
         global location_name_dict
         location_name_dict = pickle.load(f1)
-    with open("SSID_table.pkl", 'rb') as f2:
+    with open(current_path+"SSID_table.pkl", 'rb') as f2:
         global SSID_table
         SSID_table = pickle.load(f2)
 
-    with codecs.open(filename=file_path, mode='r', encoding="UTF-8") as file:
+    with codecs.open(filename=current_path+file_path, mode='r', encoding="UTF-8") as file:
         lines = file.readlines()
         list_information = build_info("package", lines)
         pd_dataframe, list_task = digest_list_information(list_information)
@@ -187,6 +185,7 @@ def build_data():
         pickle.dump(SSID_table, f3)
 
     return pd_dataframe, list_task
+
 
 def Boruta_strategy(processed_data, list_task):
     data = processed_data.values
@@ -209,96 +208,22 @@ def Boruta_strategy(processed_data, list_task):
         if feature_selector.support_[i] == True:
             new_feature_names.append(list(original_feature_names)[i])
 
-    return processed_data, new_feature_names, labels
+    return new_feature_names
 
 
 def build_feature(processed_data, list_task):
     return Boruta_strategy(processed_data, list_task)
 
-def build_tree(processed_data, new_feature_names, labels):
-    decision_tree = DecisionTreeClassifier()
-    decision_tree.fit(processed_data, labels)
 
-    fig = plt.figure(figsize=(25,20))
-    _ = tree.plot_tree(decision_tree, 
-                feature_names=new_feature_names,  
-                class_names=[package_to_explore, "NOT_"+package_to_explore],
-                filled=True)
-    fig.savefig("tree.png")
+def generate_feature_names(tasks_to_digest):
 
-    return decision_tree
+    feature_names_dict = {}
 
+    for task in tasks_to_digest:
+        global package_to_explore
+        package_to_explore = task
+        processed_data, list_task = build_data()
+        feature_names = build_feature(processed_data, list_task)
+        feature_names_dict[task] = feature_names
 
-def build_rules(tree, feature_names): 
-    class_names = [0, 1]
-    tree_ = tree.tree_
-    feature_name = [
-        feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!"
-        for i in tree_.feature
-    ]
-
-    paths = []
-    path = []
-
-    def recurse(node, path, paths):
-        
-        if tree_.feature[node] != _tree.TREE_UNDEFINED:
-            name = feature_name[node]
-            threshold = tree_.threshold[node]
-            p1, p2 = list(path), list(path)
-            p1 += [f"({name} <= {numpy.round(threshold, 3)})"]
-            recurse(tree_.children_left[node], p1, paths)
-            p2 += [f"({name} > {numpy.round(threshold, 3)})"]
-            recurse(tree_.children_right[node], p2, paths)
-        else:
-            path += [(tree_.value[node], tree_.n_node_samples[node])]
-            paths += [path]
-            
-    recurse(0, path, paths)
-
-    # sort by samples count
-    samples_count = [p[-1][1] for p in paths]
-    ii = list(numpy.argsort(samples_count))
-    paths = [paths[i] for i in reversed(ii)]
-
-    rules = []
-    for path in paths:
-        rule = "if "
-        
-        for p in path[:-1]:
-            if rule != "if ":
-                rule += " and "
-            rule += str(p)
-        rule += " then "
-        if class_names is None:
-            rule += "response: "+str(numpy.round(path[-1][0][0][0],3))
-        else:
-            classes = path[-1][0][0]
-            l = numpy.argmax(classes)
-            rule += f"class: {class_names[l]} (proba: {numpy.round(100.0*classes[l]/numpy.sum(classes),2)}%)"
-        rule += f" | based on {path[-1][1]:,} samples"
-        rules += [rule]
-        
-    return rules
-
-
-def main():
-    pd_dataframe, list_task = build_data()
-
-    print(pd_dataframe)
-
-    processed_data, new_feature_names, labels = build_feature(pd_dataframe, list_task)
-
-    tree = build_tree(processed_data, new_feature_names, labels)
-
-    rules = build_rules(tree, new_feature_names)
-
-    with codecs.open(filename="rules.txt", mode='w', encoding='UTF-8') as rule_file:
-        for r in rules:
-            rule_file.writelines(r)
-            rule_file.writelines('\r\n')
-            rule_file.writelines('\r\n')
-
-
-if __name__ == '__main__':
-    main()
+    return feature_names_dict
