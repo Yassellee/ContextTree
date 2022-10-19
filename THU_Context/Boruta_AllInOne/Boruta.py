@@ -4,20 +4,21 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 file_path = "logitems.txt"
-package_to_explore = "com.tencent.mm"
+package_to_explore = "com.tencent.mm-package"
 previous_latitude, previous_longitude, previous_altitude, previous_location_tag = 0, 0, 0, 0 
 previous_SSID_number, previous_LinkSpeed, previous_signal = 0, 0, 0
 previous_bluetooth_state = 0
+stored_service = []
 
 
-def build_info(types, lines):
+def build_info(lines):
     list_information = []
     for line in lines:
         information = re.split('##|@@', line)
         line_dict = {}
-        if types == information[1]:
-            line_dict["task"] = information[0]
-            line_dict["types"] = information[1]
+        service_name = information[0]+'-'+information[1]
+        if service_name in stored_service:
+            line_dict["task"] = service_name
             line_dict["time"] = information[2]
             line_dict["location"] = information[3]
             line_dict["network"] = information[4]
@@ -178,7 +179,7 @@ def build_data():
 
     with codecs.open(filename=current_path+file_path, mode='r', encoding="UTF-8") as file:
         lines = file.readlines()
-        list_information = build_info("package", lines)
+        list_information = build_info(lines)
         pd_dataframe, list_task = digest_list_information(list_information)
 
     with open("SSID_table.pkl", 'wb') as f3:
@@ -216,6 +217,8 @@ def build_feature(processed_data, list_task):
 
 
 def generate_feature_names(tasks_to_digest):
+    global stored_service
+    stored_service = tasks_to_digest
 
     feature_names_dict = {}
 
