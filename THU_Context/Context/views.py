@@ -14,12 +14,12 @@ def insert_info(request):
 
     if request.method == 'POST':
         try:
-            insert_info = request.FILES['update_file']
+            insert_info = request.FILES['file']
         except Exception as e:
             return gen_response(400, "Unable to extract files: {}".format(e))
         def handle_uploaded_file(f):
             previous_folder_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-            with open(previous_folder_path+'\\Boruta_AllInOne\\logItems.txt', 'ab+') as destination:
+            with open(previous_folder_path+'/Boruta_AllInOne/logItems.txt', 'ab+') as destination:
                 for chunk in f.chunks():
                     destination.write(chunk)
 
@@ -46,6 +46,7 @@ def add_task(request):
 
     if request.method == 'POST':
         try:
+            print(request.POST)
             task_names = request.POST['task_name']
             task_names = task_names.split('==')
         except Exception as e:
