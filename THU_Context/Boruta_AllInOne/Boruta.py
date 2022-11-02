@@ -359,15 +359,15 @@ def build_data():
         list_information = build_info(lines)
         pd_dataframe, list_task = digest_list_information(list_information)
 
-    with open("SSID_table.pkl", 'wb') as _f2:
+    with open(current_path+"SSID_table.pkl", 'wb') as _f2:
         pickle.dump(SSID_table, _f2)
-    with open("address_table.pkl", 'wb') as _f3:
+    with open(current_path+"address_table.pkl", 'wb') as _f3:
         pickle.dump(address_table, _f3)
-    with open("location_table.pkl", 'wb') as _f4:
+    with open(current_path+"location_table.pkl", 'wb') as _f4:
         pickle.dump(location_table, _f4)
-    with open("climate_table.pkl", 'wb') as _f5:
+    with open(current_path+"climate_table.pkl", 'wb') as _f5:
         pickle.dump(climate_table, _f5)
-    with open("package_table.pkl", 'wb') as _f6:
+    with open(current_path+"package_table.pkl", 'wb') as _f6:
         pickle.dump(package_table, _f6)
 
     return pd_dataframe, list_task

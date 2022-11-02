@@ -3,6 +3,8 @@ import sys, os
 from .models import Task
 sys.path.append('..')
 from Boruta_AllInOne.Boruta import generate_feature_names
+from openai_toolkit.openai_toolkit import openai_toolkit
+import openai
 
 
 def insert_info(request):
@@ -86,6 +88,51 @@ def clean_database(request):
             return gen_response(200, "Delete task successfully!")
         except Exception as e:
             return gen_response(400, "Error when deleting name from database: {}".format(e))
+
+    else:
+        return gen_response(400, "Bad Request")
+
+
+def get_completion(request):
+    def gen_response(code, data):
+        return JsonResponse({
+            'code': code,
+            'data': data
+        }, status=code)
+
+    if request.method == 'POST':
+        try:
+            prompt = request.POST['prompt']
+        except Exception as e:
+            return gen_response(400, "Unable to digest post information: {}".format(e))
+        try:
+            response = openai.Completion.create(
+                engine="ada",
+                prompt=prompt
+            )
+            return gen_response(200, response)
+        except Exception as e:
+            return gen_response(400, "Error when getting completion from openai: {}".format(e))
+
+    else:
+        return gen_response(400, "Bad Request")
+
+
+def delete_logitems(request):
+    def gen_response(code, data):
+        return JsonResponse({
+            'code': code,
+            'data': data
+        }, status=code)
+
+    if request.method == 'POST':
+        try:
+            previous_folder_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+            with open(previous_folder_path+'/Boruta_AllInOne/logItems.txt', 'w') as f:
+                f.truncate()
+            return gen_response(200, "Delete logItems successfully!")
+        except Exception as e:
+            return gen_response(400, "Error when deleting logItems: {}".format(e))
 
     else:
         return gen_response(400, "Bad Request")
