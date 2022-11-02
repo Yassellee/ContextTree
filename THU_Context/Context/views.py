@@ -17,11 +17,12 @@ def insert_info(request):
     if request.method == 'POST':
         try:
             insert_info = request.FILES['file']
+            username = request.POST['username']
         except Exception as e:
             return gen_response(400, "Unable to extract files: {}".format(e))
         def handle_uploaded_file(f):
             previous_folder_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-            with open(previous_folder_path+'/Boruta_AllInOne/logItems.txt', 'ab+') as destination:
+            with open(previous_folder_path+'/Boruta_AllInOne/logItems_{}.txt'.format(username), 'ab+') as destination:
                 for chunk in f.chunks():
                     destination.write(chunk)
 
@@ -29,9 +30,7 @@ def insert_info(request):
 
         task_names = Task.objects.values_list('task_name', flat=True).distinct()
 
-        print(task_names)
-        
-        return_info = generate_feature_names(task_names)
+        return_info = generate_feature_names(task_names, username)
 
         return gen_response(200, return_info)
 
@@ -106,11 +105,9 @@ def get_completion(request):
         except Exception as e:
             return gen_response(400, "Unable to digest post information: {}".format(e))
         try:
-            response = openai.Completion.create(
-                engine="ada",
-                prompt=prompt
-            )
-            return gen_response(200, response)
+            openai_toolkit_instance = openai_toolkit()
+            completion = openai_toolkit_instance.get_completion(prompt)
+            return gen_response(200, completion)
         except Exception as e:
             return gen_response(400, "Error when getting completion from openai: {}".format(e))
 
@@ -126,9 +123,10 @@ def delete_logitems(request):
         }, status=code)
 
     if request.method == 'POST':
+        username = request.POST['username']
         try:
             previous_folder_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-            with open(previous_folder_path+'/Boruta_AllInOne/logItems.txt', 'w') as f:
+            with open(previous_folder_path+'/Boruta_AllInOne/logItems_{}.txt'.format(username), 'w') as f:
                 f.truncate()
             return gen_response(200, "Delete logItems successfully!")
         except Exception as e:

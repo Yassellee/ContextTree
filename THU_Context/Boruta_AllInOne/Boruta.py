@@ -401,7 +401,7 @@ def build_feature(processed_data, list_task):
     return Boruta_strategy(processed_data, list_task)
 
 
-def generate_feature_names(tasks_to_digest):
+def generate_feature_names(tasks_to_digest, username):
     global stored_service
     real_task = []
     for task in tasks_to_digest:
@@ -409,6 +409,9 @@ def generate_feature_names(tasks_to_digest):
     stored_service = real_task
 
     feature_names_dict = {}
+
+    global file_path
+    file_path = "logItems_{}.txt".format(username)
 
     for task in tasks_to_digest:
         actual_task_list = [task+"-task", task+"-package"]
