@@ -102,10 +102,22 @@ def get_completion(request):
     if request.method == 'POST':
         try:
             prompt = request.POST['prompt']
+            try:
+                key = request.POST['key']
+            except:
+                key = "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"
+            try:
+                engine = request.POST['engine']
+            except:
+                engine = "ada"
+            try:
+                temperature = request.POST['temperature']
+            except:
+                temperature = 0.5
         except Exception as e:
             return gen_response(400, "Unable to digest post information: {}".format(e))
         try:
-            openai_toolkit_instance = openai_toolkit()
+            openai_toolkit_instance = openai_toolkit(api_key = key, engine = engine, temperature = temperature)
             completion = openai_toolkit_instance.get_completion(prompt)
             return gen_response(200, completion)
         except Exception as e:
