@@ -1,4 +1,4 @@
-import re, ast, pickle, pandas, codecs, os
+import re, ast, pickle, pandas, codecs, os, json
 from boruta import BorutaPy
 from sklearn.ensemble import RandomForestClassifier
 from datetime import datetime
@@ -86,9 +86,12 @@ def digest_location(raw_location):
         address = address_table[address]
     else:
         address = address_table[address]
-        
-    tag = ast.literal_eval(location_info[6])[0].get("tags").replace(';', '_')
-    tag = location_name_dict.get(tag)
+
+    if location_info[6] == '[]':
+        tag = None
+    else:
+        tag = ast.literal_eval(location_info[6])[0].get("tags").replace(';', '_')
+        tag = location_name_dict.get(tag)
     if previous_location_tag != tag:
         diff_tag = 1
         previous_location_tag = tag
@@ -149,7 +152,11 @@ def digest_bluetooth(bluetooth):
     if bluetooth == ' ':
         return 0, 0, 0, 0
     bluetooth = ast.literal_eval(bluetooth)
-    bluetooth_state = bluetooth.get("bluetooth_state:")
+    bluetooth_state = any
+    if bluetooth.get("bluetooth_state:") is None:
+        bluetooth_state = bluetooth.get("bluetooth_state")
+    else:
+        bluetooth_state = bluetooth.get("bluetooth_state:")
     bluetooth_count = len(bluetooth.get("connectedDevices"))
 
     if previous_bluetooth_state != bluetooth_state:
@@ -167,6 +174,7 @@ def digest_activities(activities):
 
 
 def digest_weather(raw_weather):
+    raw_weather = raw_weather.strip('\n').strip('\r')
     global previous_weather, previous_temperature
     diff_weather, diff_temperature = 0, 0
     if raw_weather == ' ':
@@ -317,7 +325,7 @@ def digest_list_information(list_information):
 
 
 def build_data():
-    current_path = os.path.abspath(os.path.dirname(__file__))+"/"
+    current_path = os.path.abspath(os.path.dirname(__file__))+"/data/"
     pd_dataframe = None
     list_task = None
     with open(current_path+"location_name_dict.pkl", 'rb') as f1:
@@ -374,6 +382,9 @@ def build_data():
 
 
 def Boruta_strategy(processed_data, list_task):
+    # change NAN in processed_data to 0
+    processed_data = processed_data.fillna(0)
+
     data = processed_data.values
     original_feature_names = processed_data.columns.values
     labels = []
@@ -385,7 +396,7 @@ def Boruta_strategy(processed_data, list_task):
 
     forest = RandomForestClassifier(n_jobs=-1, class_weight='balanced', max_depth=5)
     forest.fit(data, labels)
-    feature_selector = BorutaPy(forest, n_estimators='auto', verbose=2, random_state=1, max_iter=50)
+    feature_selector = BorutaPy(forest, n_estimators='auto', verbose=0, random_state=1, max_iter=20)
     feature_selector.fit(data, labels)
     processed_data = feature_selector.transform(data)
 
@@ -402,6 +413,7 @@ def build_feature(processed_data, list_task):
 
 
 def generate_feature_names(tasks_to_digest, username):
+    print("Start to generate feature names for user: "+username)
     global stored_service
     real_task = []
     for task in tasks_to_digest:
@@ -411,9 +423,10 @@ def generate_feature_names(tasks_to_digest, username):
     feature_names_dict = {}
 
     global file_path
-    file_path = "logItems_{}.txt".format(username)
+    file_path = "{}/logItems.txt".format(username)
 
     for task in tasks_to_digest:
+        print("Processing task: {}".format(task))
         actual_task_list = [task+"-task", task+"-package"]
         for actual_task in actual_task_list:
             global package_to_explore
@@ -427,4 +440,8 @@ def generate_feature_names(tasks_to_digest, username):
                     feature_names_dict[task] = build_feature(processed_data, list_task)
                 else:
                     feature_names_dict[task] = []
-    return feature_names_dict
+        print("generated {} features for task: {}".format(len(feature_names_dict[task]), task))
+        print('----------------------------------------')
+    feature_path = os.path.abspath(os.path.dirname(__file__))+"/data/{}/feature.json".format(username)
+    with open(feature_path, 'w') as f:
+        json.dump(feature_names_dict, f, indent=4, ensure_ascii=False)

@@ -1,0 +1,186 @@
+{
+    "美团": [
+        "exact_time",
+        "latitude",
+        "altitude",
+        "LinkSpeed",
+        "temperature",
+        "diff-location",
+        "hour"
+    ],
+    "云空间": [
+        "LinkSpeed"
+    ],
+    "联系人": [
+        "location",
+        "address"
+    ],
+    "安卓配置wifi": [
+        "LinkSpeed",
+        "weather"
+    ],
+    "图库": [
+        "exact_time"
+    ],
+    "微信": [
+        "exact_time",
+        "LinkSpeed"
+    ],
+    "抖音": [
+        "exact_time",
+        "LinkSpeed",
+        "hour"
+    ],
+    "面对面建群": [
+        "exact_time",
+        "latitude",
+        "altitude",
+        "SSID_number",
+        "location",
+        "address",
+        "hour"
+    ],
+    "百度": [
+        "exact_time"
+    ],
+    "相机": [
+        "day",
+        "latitude",
+        "longitude",
+        "weather",
+        "week_day"
+    ],
+    "软件更新": [],
+    "微信查看消息": [
+        "exact_time",
+        "latitude",
+        "longitude",
+        "altitude",
+        "SSID_number",
+        "LinkSpeed",
+        "diff-LinkSpeed",
+        "temperature",
+        "address",
+        "hour"
+    ],
+    "知乎": [],
+    "设置": [
+        "exact_time",
+        "latitude",
+        "altitude",
+        "SSID_number",
+        "LinkSpeed",
+        "temperature",
+        "address",
+        "hour"
+    ],
+    "浏览器": [
+        "longitude"
+    ],
+    "新浪新闻": [],
+    "百度地图": [],
+    "拍拍助手": [
+        "day",
+        "exact_time",
+        "latitude",
+        "altitude",
+        "SSID_number",
+        "temperature",
+        "address",
+        "hour",
+        "week_day"
+    ],
+    "美团搜索": [
+        "diff-latitude",
+        "diff-longitude",
+        "address",
+        "diff-address"
+    ],
+    "微信查看朋友圈": [
+        "exact_time",
+        "longitude",
+        "altitude",
+        "SSID_number",
+        "temperature",
+        "hour"
+    ],
+    "Bilibili看直播": [],
+    "网易云fm": [],
+    "支付宝": [
+        "exact_time",
+        "diff-longitude",
+        "hour"
+    ],
+    "3D地图示例": [],
+    "饿了么美食外卖": [
+        "day",
+        "exact_time",
+        "longitude",
+        "altitude",
+        "SSID_number",
+        "LinkSpeed",
+        "temperature",
+        "hour",
+        "week_day"
+    ],
+    "QQ": [
+        "altitude",
+        "diff-signal"
+    ],
+    "信息": [],
+    "滚动截屏": [],
+    "饿了么": [
+        "altitude"
+    ],
+    "备忘录": [
+        "exact_time",
+        "altitude",
+        "temperature",
+        "hour"
+    ],
+    "网易云音乐": [
+        "exact_time",
+        "altitude",
+        "hour"
+    ],
+    "腾讯新闻": [
+        "exact_time",
+        "latitude",
+        "longitude",
+        "SSID_number",
+        "LinkSpeed",
+        "address"
+    ],
+    "哔哩哔哩": [
+        "exact_time",
+        "altitude"
+    ],
+    "手机管家": [
+        "day",
+        "exact_time",
+        "latitude",
+        "longitude",
+        "altitude",
+        "SSID_number",
+        "LinkSpeed",
+        "signal",
+        "temperature",
+        "address",
+        "hour",
+        "week_day"
+    ],
+    "智慧语音": [],
+    "Bilibili热门视频": [
+        "altitude",
+        "LinkSpeed",
+        "temperature"
+    ],
+    "淘宝": [
+        "exact_time",
+        "altitude",
+        "LinkSpeed",
+        "signal",
+        "hour"
+    ],
+    "朋友圈": []
+}
